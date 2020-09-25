@@ -46,17 +46,9 @@ module CapEC2
     end
 
     def load_config
-      if fetch(:ec2_profile)
-        credentials = Aws::SharedCredentials.new(profile_name: fetch(:ec2_profile)).credentials
-        if credentials
-          set :ec2_access_key_id, credentials.access_key_id
-          set :ec2_secret_access_key, credentials.secret_access_key
-        end
-      end
-
       config_location = File.expand_path(fetch(:ec2_config), Dir.pwd) if fetch(:ec2_config)
       if config_location && File.exists?(config_location)
-        config = YAML.load(ERB.new(File.read(fetch(:ec2_config))))
+        config = YAML.load(ERB.new(File.read(fetch(:ec2_config))).result)
         if config
           set :ec2_project_tag, config['project_tag'] if config['project_tag']
           set :ec2_roles_tag, config['roles_tag'] if config['roles_tag']
@@ -66,8 +58,17 @@ module CapEC2
           set :ec2_access_key_id, config['access_key_id'] if config['access_key_id']
           set :ec2_secret_access_key, config['secret_access_key'] if config['secret_access_key']
           set :ec2_region, config['regions'] if config['regions']
+          set :ec2_profile, config['profile'] if config['profile']
 
           set :ec2_filter_by_status_ok?, config['filter_by_status_ok?'] if config['filter_by_status_ok?']
+        end
+      end
+
+      if fetch(:ec2_profile)
+        credentials = Aws::SharedCredentials.new(profile_name: fetch(:ec2_profile)).credentials
+        if credentials
+          set :ec2_access_key_id, credentials.access_key_id
+          set :ec2_secret_access_key, credentials.secret_access_key
         end
       end
     end
